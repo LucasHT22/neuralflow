@@ -1,0 +1,225 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>NeuralFlow - Neural Network Visualizer</title>
+	</head>
+	<body>
+		<div class="container">
+			<h1>Neural Network Visualizer</h1>
+
+			<div class="controls">
+				<div class="control-group">
+					<label>Input Layer Neurons: <span class="value-display" id="inputValue">5</span></label>
+					<input type="range" id="inputLayer" min="1" max="20" value="5">
+				</div>
+				<div class="control-group">
+					<label>Hidden Layer Neurons: <span class="value-display" id="hiddenValue">7</span></label>
+					<input type="range" id="hiddenLayer" min="1" max="25" value="7">
+				</div>
+				<div class="control-group">
+					<label>Output Layer Neurons: <span class="value-display" id="outputValue">3</span></label>
+					<input type="range" id="outputLayer" min="1" max="15" value="3">
+				</div>
+
+				<button id="animateBtn">Animate Forward Pass</button>
+			</div>
+
+			<div class="canvas-container">
+				<canvas id="networkCanvas" width="900" height="500"></canvas>
+			</div>
+
+			<div class="info">
+				 Click "Animate Forward Pass" to see data flowing through the network
+			</div>
+		</div>
+		
+		<script>
+			const canvas = document.getElementById('networkCanvas');
+			const ctx = canvas?.getContext('2d');
+
+			if (!canvas || !ctx) {
+				console.error('Canvas not found');
+			}
+			
+			let inputNeurons = 5;
+			let hiddenNeurons = 7;
+			let outputNeurons = 3;
+			let animating = false;
+			let animationProgress = 0;
+
+			const inputSlider = document.getElementById('inputLayer');
+			const hiddenSlider = document.getElementById('hiddenLayer');
+			const outputSlider = document.getElementById('outputLayer');
+			const animateBtn = document.getElementById('animateBtn');
+
+			inputSlider?.addEventListener('input', (e) => {
+				inputNeurons = parseInt(e.target.value);
+				document.getElementById('inputValue')?.textContent = inputNeurons;
+				drawNetwork();
+			});
+
+			hiddenSlider?.addEventListener('input', (e) => {
+				hiddenNeurons = parseInt(e.target.value);
+				document.getElementById('hiddenValue')?.textContent = hiddenNeurons;
+				drawNetwork();
+			});
+
+			outputSlider?.addEventListener('input', (e) => {
+				outputNeurons = parseInt(e.target.value);
+				document.getElementById('outputValue')?.textContent = outputNeurons;
+				drawNetwork();
+			});
+
+			animateBtn?.addEventListener('click', () => {
+				if (!animating) {
+					animating = true;
+					animationProgress = 0;
+					animate();
+				}
+			})
+
+			function drawNetwork() {
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+				const layers = [inputNeurons, hiddenNeurons, outputNeurons];
+				const layerX = [150, 450, 750];
+				const neuronRadius = 20;
+
+				for (let l = 0; l < layers.length; l++) {
+					const currentLayer = layers[l];
+					const nextLayer = layers[l + 1];
+
+					for (let i = 0; i < currentLayer; i++) {
+						const y1 = getYPosition(i, currentLayer);
+
+						for (let j = 0; j < nextLayer; j++) {
+							const y2 = getYPosition(j, nextLayer);
+
+							ctx.strokeStyle = '#e0e0e0';
+							ctx.lineWidth = 1;
+							ctx.beginPath();
+							ctx.moveTo(layerX[l] + neuronRadius, y1);
+							ctx.lineTo(layerX[l + 1] - neuronRadius, y2);
+							ctx.stroke();
+						}
+					}
+				}
+
+				if (animating && animationProgress > 0) {
+					drawAnimatedConnections(layers, layerX, neuronRadius);
+				}
+
+				const layerColors = ['#667eea', '#764ba2', '#f093fb'];
+				const layerLabels = ['Input', 'Hidden', 'Output'];
+
+				for (let l = 0; l < layers.length; l++) {
+					ctx.fillStyle = layerColors[l];
+
+					for (let i = 0; i < layers[l]; i++) {
+						const y = getYPosition(i, layers[l]);
+
+						ctx.beginPath();
+						ctx.arc(layerX[l], y, neuronRadius, 0, Math.PI * 2);
+						ctx.fill();
+
+						ctx.strokeStyle = 'white';
+						ctx.lineWidth = 3;
+						ctx.stroke();
+
+						if (animating) {
+							const layerProgress = (animationProgress - l * 0.3) / 0.3;
+							if (layerProgress > 0 && layerProgress < 1) {
+								ctx.shadowBlur = 20;
+								ctx.shadowColor = layerColors[l];
+								ctx.beginPath();
+								ctx.arc(layerX[l], y, neuronRadius, 0, Math.PI * 2);
+								ctx.fill();
+								ctx.shadowBlur = 0;
+							}
+						}
+					}
+
+					ctx.fillStyle = '#333333';
+					ctx.font = 'bold 16px Arial';
+					ctx.textAlign = 'center';
+					ctx.fillText(layerLabels[l], layerX[l], canvas.height - 20);
+				}
+			}
+
+			function getYPosition(index, total) {
+				const spacing = Math.min(80, (canvas.height - 100) / (total + 1));
+				const startY = (canvas.height - (total - 1) * spacing) / 2;
+				return startY + index * spacing;
+			}
+
+			function drawAnimatedConnections(layers, layerX, neuronRadius) {
+				const layerColors = ['#667eea', '#764ba2', '#f093fb'];
+
+				for (let l = 0; l < layers.length - 1; l++) {
+					const layerProgress = (animationProgress - l * 0.3) / 0.3;
+
+					if (layerProgress > 0 && layerProgress < 1) {
+						const currentLayer = layers[l];
+						const nextLayer = layers[l + 1];
+
+						for (let i = 0; i < currentLayer; i++) {
+							const y1 = getYPosition(i, currentLayer);
+
+							for (let j = 0; j < nextLayer; j++) {
+								const y2 = getYPosition(j, nextLayer);
+
+								const x1 = layerX[l] + neuronRadius;
+								const x2 = layerX[l + 1] - neuronRadius;
+								const currentX = x1 + (x2 - x1) * layerProgress;
+								const currentY = y1 + (y2 - y1) * layerProgress;
+
+								const gradient = ctx.createLinearGradient(x1, y1, currentX, currentY);
+								gradient.addColorStop(0, layerColors[l]);
+								gradient.addColorStop(1, layerColors[l = 1]);
+
+								ctx.strokeStyle = gradient;
+								ctx.lineWidth = 2;
+								ctx.globalAlpha = 0.6;
+								ctx.beginPath();
+								ctx.moveTo(x1, y1);
+								ctx.lineTo(currentX, currentY);
+								ctx.stroke();
+
+								ctx.fillStyle = layerColors[l + 1];
+								ctx.globalAlpha =1;
+								ctx.beginPath();
+								ctx.arc(currentX, currentY, 4, 0, Math.PI * 2);
+							}
+						}
+					}
+				}
+
+				ctx.globalAlpha = 1;
+			}
+
+			function animate() {
+				animationProgress += 0.015;
+
+				if (animationProgress >= 1) {
+					animating = false;
+					animationProgress = 0;
+				}
+
+				drawNetwork();
+
+				if (animating) {
+					requestAnimationFrame(animate);
+				}
+			}
+
+			drawNetwork();
+
+		</script>
+	</body>
+</html>
