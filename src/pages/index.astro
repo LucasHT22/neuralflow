@@ -39,7 +39,7 @@
 			</div>
 		</div>
 		
-		<script>
+		 <script>
 			const canvas = document.getElementById('networkCanvas');
 			const ctx = canvas?.getContext('2d');
 
@@ -60,19 +60,19 @@
 
 			inputSlider?.addEventListener('input', (e) => {
 				inputNeurons = parseInt(e.target.value);
-				document.getElementById('inputValue')?.textContent = inputNeurons;
+				document.getElementById('inputValue').textContent = inputNeurons;
 				drawNetwork();
 			});
 
 			hiddenSlider?.addEventListener('input', (e) => {
 				hiddenNeurons = parseInt(e.target.value);
-				document.getElementById('hiddenValue')?.textContent = hiddenNeurons;
+				document.getElementById('hiddenValue').textContent = hiddenNeurons;
 				drawNetwork();
 			});
 
 			outputSlider?.addEventListener('input', (e) => {
 				outputNeurons = parseInt(e.target.value);
-				document.getElementById('outputValue')?.textContent = outputNeurons;
+				document.getElementById('outputValue').textContent = outputNeurons;
 				drawNetwork();
 			});
 
@@ -82,7 +82,7 @@
 					animationProgress = 0;
 					animate();
 				}
-			})
+			});
 
 			function drawNetwork() {
 				ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -91,7 +91,7 @@
 				const layerX = [150, 450, 750];
 				const neuronRadius = 20;
 
-				for (let l = 0; l < layers.length; l++) {
+				for (let l = 0; l < layers.length - 1; l++) {
 					const currentLayer = layers[l];
 					const nextLayer = layers[l + 1];
 
@@ -181,7 +181,7 @@
 
 								const gradient = ctx.createLinearGradient(x1, y1, currentX, currentY);
 								gradient.addColorStop(0, layerColors[l]);
-								gradient.addColorStop(1, layerColors[l = 1]);
+								gradient.addColorStop(1, layerColors[l + 1]);
 
 								ctx.strokeStyle = gradient;
 								ctx.lineWidth = 2;
@@ -192,9 +192,10 @@
 								ctx.stroke();
 
 								ctx.fillStyle = layerColors[l + 1];
-								ctx.globalAlpha =1;
+								ctx.globalAlpha = 1;
 								ctx.beginPath();
 								ctx.arc(currentX, currentY, 4, 0, Math.PI * 2);
+								ctx.fill();
 							}
 						}
 					}
@@ -219,7 +220,6 @@
 			}
 
 			drawNetwork();
-
 		</script>
 	</body>
 </html>
